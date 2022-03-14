@@ -14,8 +14,14 @@ with open('./press_log_100Hz/press_logs_20220309-102401_2_checked.csv') as f:
     reader = csv.reader(f)
     l = [row for row in reader]
 
-np.random.seed(0)
+f = [k[1:] for k in l[1:]]
+for i in range(len(f)):
+    for j in range(len(f[0])):
+        f[i][j] = float(f[i][j])
+f = np.array(f)
 
+
+np.random.seed(0)
 
 def sin(x, T=100):
     return np.sin(2.0 * np.pi * x / T)
@@ -29,21 +35,22 @@ def toy_problem(T=100, ampl=0.05):
 '''
 データの生成
 '''
-T = 100
-f = toy_problem(T)
+noise = np.random.uniform(low=-30, high=30, size=(len(f), 3))
+l = f+noise
+I = 3
 
 length_of_sequences = len(l)
 maxlen = 25  # ひとつの時系列データの長さ
 
-data = []
-target = []
+data = np.zeros((length_of_sequences - maxlen + 1, maxlen, I))
+target = np.zeros((length_of_sequences - maxlen + 1, I))
 
-for i in range(0, length_of_sequences - maxlen + 1):
-    data.append(l[i: i + maxlen])
-    target.append(l[i + maxlen])
+for i in range(0, length_of_sequences - maxlen ):
+    data[i] = l[i: i + maxlen]
+    target[i] = l[i + maxlen]
 
-X = np.array(data).reshape(len(data), maxlen, 1)
-Y = np.array(target).reshape(len(data), 1)
+X = np.array(data).reshape(len(data), maxlen, I)
+Y = np.array(target).reshape(len(data), I)
 
 # データ設定
 N_train = int(len(data) * 0.9)
@@ -107,14 +114,9 @@ for i in range(length_of_sequences - maxlen + 1):
     Z = np.append(Z, sequence_, axis=0)
     predicted.append(y_.reshape(-1))
 
-'''
-グラフで可視化
-'''
-plt.rc('font', family='serif')
-plt.figure()
-plt.ylim([-1.5, 1.5])
-plt.plot(toy_problem(T, ampl=0), linestyle='dotted', color='#aaaaaa')
-plt.plot(original, linestyle='dashed', color='black')
-plt.plot(predicted, color='black')
-plt.savefig('output-0.png')
-
+f_predict = open('result.txt', 'w')
+for i in predicted:
+    i = str(i)
+    f_predict.write(i)
+    f_predict.write('\n')
+f_predict.close()

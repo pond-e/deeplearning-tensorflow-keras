@@ -11,4 +11,6 @@ for i in range(len(f)):
     for j in range(len(f[0])):
         f[i][j] = float(f[i][j])
 #f = np.array(f)
-print(f[:10])
+print(f[1])
+f[1] = [10, 10, 10]
+print(f[1])
