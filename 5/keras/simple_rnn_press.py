@@ -17,7 +17,7 @@ with open('./press_log_100Hz/press_logs_20220309-102401_2_checked.csv') as f:
 f = [k[1:] for k in l[1:]]
 for i in range(len(f)):
     for j in range(len(f[0])):
-        f[i][j] = float(f[i][j])
+        f[i][j] = float(f[i][j])/1000
 f = np.array(f)
 
 
@@ -35,9 +35,10 @@ def toy_problem(T=100, ampl=0.05):
 '''
 データの生成
 '''
-noise = np.random.uniform(low=-30, high=30, size=(len(f), 3))
-l = f+noise
 I = 3
+noise = np.random.uniform(low=-30, high=30, size=(len(f), I))
+l = f+noise
+
 
 length_of_sequences = len(l)
 maxlen = 25  # ひとつの時系列データの長さ

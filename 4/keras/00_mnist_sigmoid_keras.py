@@ -4,17 +4,23 @@ from keras.layers.core import Dense, Activation
 from keras.optimizers import SGD
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
+from sklearn.datasets import fetch_openml
 
 np.random.seed(0)
 
 '''
 データの生成
 '''
-mnist = datasets.fetch_mldata('MNIST original', data_home='.')
+mnist = fetch_openml('mnist_784', version=1,)
 
 n = len(mnist.data)
-N = 10000  # MNISTの一部を使う
+print(n)
+N = 784  # MNISTの一部を使う
 indices = np.random.permutation(range(n))[:N]  # ランダムにN枚を選択
+
+print(mnist.data['pixel1'])
+print(len(mnist.data['pixel1']))
+print(mnist.data)
 
 X = mnist.data[indices]
 y = mnist.target[indices]
