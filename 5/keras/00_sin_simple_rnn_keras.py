@@ -26,7 +26,7 @@ def toy_problem(T=100, ampl=0.05):
 '''
 T = 100
 f = toy_problem(T)
-
+print(f)
 length_of_sequences = 2 * T
 maxlen = 25  # ひとつの時系列データの長さ
 

@@ -15,11 +15,12 @@ with open('./press_log_100Hz/press_logs_20220309-103302_2_checked.csv') as f:
     l = [row for row in reader]
 
 f = [k[1:] for k in l[1:]]
+x = []
 for i in range(len(f)):
-    for j in range(len(f[0])):
-        f[i][j] = float(f[i][j]) #正規化する？
-f = np.array(f)
-
+    y = float(f[i][0]) #正規化する？
+    x.append(y)
+f = np.array(x)
+print(f)
 
 np.random.seed(0)
 
@@ -35,23 +36,28 @@ def toy_problem(T=100, ampl=0.05):
 '''
 データの生成
 '''
-I = 3
-noise = np.random.uniform(low=-30, high=30, size=(len(f), I))
+I = 1
+noise = np.random.uniform(low=-30, high=30, size=len(f))
 l = f+noise
+for i in range(len(l)):
+    l[i] = l[i]/1000
+print(l)
 
+length_of_sequences = len(l)-1
+print(length_of_sequences)
+maxlen = 70  # ひとつの時系列データの長さ
 
-length_of_sequences = len(l)
-maxlen = 25  # ひとつの時系列データの長さ
+data = []
+target = []
 
-data = np.zeros((length_of_sequences - maxlen + 1, maxlen, I))
-target = np.zeros((length_of_sequences - maxlen + 1, I))
+for i in range(0, length_of_sequences - maxlen + 1):
+    data.append(l[i: i + maxlen])
+    target.append(l[i + maxlen])
 
-for i in range(0, length_of_sequences - maxlen ):
-    data[i] = l[i: i + maxlen]
-    target[i] = l[i + maxlen]
+#print(data)
 
-X = np.array(data).reshape(len(data), maxlen, I)
-Y = np.array(target).reshape(len(data), I)
+X = np.array(data).reshape(len(data), maxlen, 1)
+Y = np.array(target).reshape(len(data), 1)
 
 # データ設定
 N_train = int(len(data) * 0.9)
@@ -63,9 +69,9 @@ X_train, X_validation, Y_train, Y_validation = \
 '''
 モデル設定
 '''
-n_in = len(X[0][0])  # 入力層次元:3
+n_in = len(X[0][0])  # 入力層次元:1
 n_hidden = 20
-n_out = len(Y[0])  # 出力層次元:3
+n_out = len(Y[0])  # 出力層次元:1
 
 
 def weight_variable(shape, name=None):
@@ -115,6 +121,8 @@ for i in range(length_of_sequences - maxlen + 1):
 
 f_predict = open('result.txt', 'w')
 for i in predicted:
+    if(i!=None):
+        i = i*1000
     i = str(i)
     f_predict.write(i)
     f_predict.write('\n')
