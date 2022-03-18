@@ -7,6 +7,8 @@ from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
+from sklearn.preprocessing import MinMaxScaler
+
 
 import csv
 
@@ -17,21 +19,12 @@ with open('./press_log_100Hz/press_logs_20220309-103302_2_checked.csv') as f:
 f = [k[1:] for k in l[1:]]
 x = []
 for i in range(len(f)):
-    y = float(f[i][0]) #正規化する？
+    y = float(f[i][0])
     x.append(y)
 f = np.array(x)
 print(f)
 
 np.random.seed(0)
-
-def sin(x, T=100):
-    return np.sin(2.0 * np.pi * x / T)
-
-
-def toy_problem(T=100, ampl=0.05):
-    x = np.arange(0, 2 * T + 1)
-    noise = ampl * np.random.uniform(low=-1.0, high=1.0, size=len(x))
-    return sin(x) + noise
 
 '''
 データの生成
@@ -39,12 +32,9 @@ def toy_problem(T=100, ampl=0.05):
 I = 1
 noise = np.random.uniform(low=-30, high=30, size=len(f))
 l = f+noise
-for i in range(len(l)):
-    l[i] = l[i]/1000
-print(l)
 
 length_of_sequences = len(l)-1
-print(length_of_sequences)
+#print(length_of_sequences)
 maxlen = 70  # ひとつの時系列データの長さ
 
 data = []
@@ -65,6 +55,43 @@ N_validation = len(data) - N_train
 
 X_train, X_validation, Y_train, Y_validation = \
     train_test_split(X, Y, test_size=N_validation)
+
+# 正規化
+sclr_x = MinMaxScaler(feature_range=(0, 1))
+sclr_y = MinMaxScaler(feature_range=(0, 1))
+
+X_train = sclr_x.fit_transform(X_train.reshape(-1, 1))
+X_validation = sclr_x.transform(X_validation.reshape(-1, 1))
+
+Y_train = sclr_y.fit_transform(Y_train.reshape(-1, 1))
+Y_validation = sclr_y.transform(Y_validation.reshape(-1, 1))
+
+
+# データ変換
+def convert(X, y, ws = 1, dim = 1):
+    data = []
+    target = []
+    
+    #windowサイズが1の場合は全部のデータを使う
+    #そうでない場合は、wsで全てのデータが収まる範囲で使う
+    if(ws == 1):
+        itr = len(X)
+    else:
+        itr = len(X) - ws
+    
+    for i in range(itr):
+        data.append(X[i: i + ws])
+        target.append(y[i])
+        
+    # データの整形
+    data = np.array(data).reshape(len(data), ws, dim)
+    target = np.array(target).reshape(-1,1)
+        
+    return data, target
+
+#変換
+X_train, Y_train = convert(X_train, Y_train, maxlen, 1)
+X_validation, Y_validation = convert(X_validation, Y_validation, maxlen, 1)
 
 '''
 モデル設定
@@ -97,7 +124,7 @@ model.compile(loss='mean_squared_error',
 epochs = 500
 batch_size = 10
 
-model.fit(X_train, Y_train,
+hist = model.fit(X_train, Y_train,
           batch_size=batch_size,
           epochs=epochs,
           validation_data=(X_validation, Y_validation),
@@ -109,7 +136,7 @@ model.fit(X_train, Y_train,
 truncate = maxlen
 Z = X[:1]  # 元データの最初の一部だけ切り出し
 
-original = [f[i] for i in range(maxlen)]
+#original = [f[i] for i in range(maxlen)]
 predicted = [None for i in range(maxlen)]
 
 for i in range(length_of_sequences - maxlen + 1):
@@ -119,11 +146,29 @@ for i in range(length_of_sequences - maxlen + 1):
     Z = np.append(Z, sequence_, axis=0)
     predicted.append(y_.reshape(-1))
 
-f_predict = open('result.txt', 'w')
+predicted = np.array(predicted)
+pred_inv = sclr_x.inverse_transform(predicted.reshape(-1, 1))
+
+
+fmt_name = "result.csv"
+f_press = open(fmt_name, 'w')   # 書き込みファイル
+
 for i in predicted:
-    if(i!=None):
-        i = i*1000
-    i = str(i)
-    f_predict.write(i)
-    f_predict.write('\n')
-f_predict.close()
+    if(i != None):
+        value = "%6.9f"%(i)
+        f_press.write(value + "\n")
+f_press.close()
+
+'''
+学習の進み具合を可視化
+'''
+
+
+#val_acc = hist.history['val_acc']
+val_loss = hist.history['val_loss']
+
+plt.rc('font', family='serif')
+fig = plt.figure()
+plt.plot(range(len(val_loss)), val_loss, label='loss', color='black')
+plt.xlabel('epochs')
+plt.savefig('only_learn.png')
