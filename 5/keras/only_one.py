@@ -1,3 +1,4 @@
+from math import nan
 import numpy as np
 import matplotlib.pyplot as plt
 from keras.models import Sequential
@@ -16,13 +17,13 @@ with open('./press_log_100Hz/press_logs_20220309-103302_2_checked.csv') as f:
     reader = csv.reader(f)
     l = [row for row in reader]
 
-f = [k[1:] for k in l[1:]]
+f = [k[1:] for k in l[1:138]]
 x = []
 for i in range(len(f)):
     y = float(f[i][0])
     x.append(y)
 f = np.array(x)
-print(f)
+#print(f)
 
 np.random.seed(0)
 
@@ -33,9 +34,13 @@ I = 1
 noise = np.random.uniform(low=-30, high=30, size=len(f))
 l = f+noise
 
+# 正規化
+sclr_x = MinMaxScaler(feature_range=(0, 1))
+l = sclr_x.fit_transform(l.reshape(-1, 1))
+
 length_of_sequences = len(l)-1
 #print(length_of_sequences)
-maxlen = 70  # ひとつの時系列データの長さ
+maxlen = 50  # ひとつの時系列データの長さ
 
 data = []
 target = []
@@ -55,43 +60,6 @@ N_validation = len(data) - N_train
 
 X_train, X_validation, Y_train, Y_validation = \
     train_test_split(X, Y, test_size=N_validation)
-
-# 正規化
-sclr_x = MinMaxScaler(feature_range=(0, 1))
-sclr_y = MinMaxScaler(feature_range=(0, 1))
-
-X_train = sclr_x.fit_transform(X_train.reshape(-1, 1))
-X_validation = sclr_x.transform(X_validation.reshape(-1, 1))
-
-Y_train = sclr_y.fit_transform(Y_train.reshape(-1, 1))
-Y_validation = sclr_y.transform(Y_validation.reshape(-1, 1))
-
-
-# データ変換
-def convert(X, y, ws = 1, dim = 1):
-    data = []
-    target = []
-    
-    #windowサイズが1の場合は全部のデータを使う
-    #そうでない場合は、wsで全てのデータが収まる範囲で使う
-    if(ws == 1):
-        itr = len(X)
-    else:
-        itr = len(X) - ws
-    
-    for i in range(itr):
-        data.append(X[i: i + ws])
-        target.append(y[i])
-        
-    # データの整形
-    data = np.array(data).reshape(len(data), ws, dim)
-    target = np.array(target).reshape(-1,1)
-        
-    return data, target
-
-#変換
-X_train, Y_train = convert(X_train, Y_train, maxlen, 1)
-X_validation, Y_validation = convert(X_validation, Y_validation, maxlen, 1)
 
 '''
 モデル設定
@@ -136,7 +104,7 @@ hist = model.fit(X_train, Y_train,
 truncate = maxlen
 Z = X[:1]  # 元データの最初の一部だけ切り出し
 
-#original = [f[i] for i in range(maxlen)]
+original = [f[i] for i in range(130)]
 predicted = [None for i in range(maxlen)]
 
 for i in range(length_of_sequences - maxlen + 1):
@@ -144,7 +112,7 @@ for i in range(length_of_sequences - maxlen + 1):
     y_ = model.predict(z_)
     sequence_ = np.concatenate((z_.reshape(maxlen, n_in)[1:], y_),axis=0).reshape(1, maxlen, n_in)
     Z = np.append(Z, sequence_, axis=0)
-    predicted.append(y_.reshape(-1))
+    predicted.append(y_)
 
 predicted = np.array(predicted)
 pred_inv = sclr_x.inverse_transform(predicted.reshape(-1, 1))
@@ -153,17 +121,24 @@ pred_inv = sclr_x.inverse_transform(predicted.reshape(-1, 1))
 fmt_name = "result.csv"
 f_press = open(fmt_name, 'w')   # 書き込みファイル
 
-for i in predicted:
-    if(i != None):
+count = 0
+for i in pred_inv:
+    if(count > maxlen):
         value = "%6.9f"%(i)
         f_press.write(value + "\n")
+    count += 1
 f_press.close()
+
+plt.rc('font', family='serif')
+fig = plt.figure()
+plt.plot(original, color='gray')
+plt.plot(pred_inv, label='volume', color='black')
+plt.xlabel('time')
+plt.savefig('output-only.png')
 
 '''
 学習の進み具合を可視化
 '''
-
-
 #val_acc = hist.history['val_acc']
 val_loss = hist.history['val_loss']
 
