@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from keras.models import Sequential
 from keras.layers.core import Dense, Activation
-from keras.layers.recurrent import SimpleRNN
+from keras.layers.recurrent import LSTM
 from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping
 from sklearn.model_selection import train_test_split
@@ -76,7 +76,7 @@ def weight_variable(shape, name=None):
 early_stopping = EarlyStopping(monitor='val_loss', patience=10, verbose=1)
 
 model = Sequential()
-model.add(SimpleRNN(n_hidden,
+model.add(LSTM(n_hidden,
                     kernel_initializer=weight_variable,
                     input_shape=(maxlen, n_in)))
 model.add(Dense(n_out, kernel_initializer=weight_variable))
