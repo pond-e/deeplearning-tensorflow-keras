@@ -111,7 +111,6 @@ for i in range(length_of_sequences - maxlen + 1):
     predicted.append(y_.reshape(-1))
 
 predicted = np.array(predicted)
-print(predicted)
 pred_inv = sclr_x.inverse_transform(predicted.reshape(-1, I))
 
 fmt_name = "result.csv"
@@ -128,7 +127,7 @@ fig = plt.figure()
 plt.plot(original[maxlen:], color='gray')
 plt.plot(pred_inv, label='volume', color='black')
 plt.xlabel('time')
-plt.savefig('1.png')
+plt.savefig('lstm.png')
 '''
 plt.rc('font', family='serif')
 fig = plt.figure()
