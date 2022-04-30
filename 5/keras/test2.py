@@ -91,8 +91,8 @@ print(len(X))
 # データ設定
 N_train = int(len(data) * 0.9)
 N_validation = len(data) - N_train
-X_train, X_validation, Y_train, Y_validation = []
-X_train_1, X_validation_1, Y_train_1, Y_validation_1 = train_test_split(X[0], Y[0], test_size=N_validation)
+X_train_1, X_validation_1, Y_train_1, Y_validation_1 = train_test_split(X, Y, test_size=N_validation)
+print(Y_train_1)
 
 
 
