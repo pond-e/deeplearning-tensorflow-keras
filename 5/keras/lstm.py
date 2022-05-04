@@ -128,21 +128,7 @@ plt.plot(original[maxlen:], color='gray')
 plt.plot(pred_inv, label='volume', color='black')
 plt.xlabel('time')
 plt.savefig('lstm.png')
-'''
-plt.rc('font', family='serif')
-fig = plt.figure()
-plt.plot(original[:][1], color='gray')
-plt.plot(pred_inv[:][1], label='volume', color='black')
-plt.xlabel('time')
-plt.savefig('2.png')
 
-plt.rc('font', family='serif')
-fig = plt.figure()
-plt.plot(original[:][2], color='gray')
-plt.plot(pred_inv[:][2], label='volume', color='black')
-plt.xlabel('time')
-plt.savefig('3.png')
-'''
 '''
 学習の進み具合を可視化
 '''
